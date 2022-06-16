@@ -16,7 +16,6 @@ contract Pool {
     uint256 public reservesTokenA;
     uint256 public reservesTokenB;
     uint256 public k;
-    uint256 public amountOutTest;
 
     constructor(
         address tokenAC,
@@ -75,8 +74,6 @@ contract Pool {
         address tokenTo = tokenFrom == tokenA ? tokenB : tokenA;
 
         uint256 amountOut = _getAmountOut(tokenFrom, amountFrom);
-
-        amountOutTest = amountOut;
 
         IERC20(tokenFrom).transferFrom(msg.sender, address(this), amountFrom);
         IERC20(tokenTo).transfer(msg.sender, amountOut);

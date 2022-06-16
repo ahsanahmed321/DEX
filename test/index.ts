@@ -87,25 +87,26 @@ describe("DEX", function () {
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenA()));
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenB()));
 
-    await PoolContract.swap(TokenA.address, ethers.utils.parseEther("25"));
+    await PoolContract.swap(TokenA.address, ethers.utils.parseEther("10"));
 
-    console.log(ethers.utils.formatEther(await PoolContract.amountOutTest()));
+    const TokenAInstance = new ethers.Contract(
+      TokenA.address,
+      ERC20TokenABI.abi,
+      accounts[0]
+    );
+    const TokenABalance = await TokenAInstance.balanceOf(accounts[0].address);
 
-    // const TokenAInstance = new ethers.Contract(
-    //   TokenA.address,
-    //   ERC20TokenABI.abi,
-    //   accounts[0]
-    // );
-    // const TokenABalance = await TokenAInstance.balanceOf(accounts[0].address);
+    const TokenBInstance = new ethers.Contract(
+      TokenB.address,
+      ERC20TokenABI.abi,
+      accounts[0]
+    );
+    const TokenBBalance = await TokenBInstance.balanceOf(accounts[0].address);
 
-    // const TokenBInstance = new ethers.Contract(
-    //   TokenB.address,
-    //   ERC20TokenABI.abi,
-    //   accounts[0]
-    // );
-    // const TokenBBalance = await TokenBInstance.balanceOf(accounts[0].address);
+    console.log(ethers.utils.formatEther(TokenABalance));
+    console.log(ethers.utils.formatEther(TokenBBalance));
 
-    // console.log(ethers.utils.formatEther(TokenABalance));
-    // console.log(ethers.utils.formatEther(TokenBBalance));
+    console.log(ethers.utils.formatEther(await PoolContract.reservesTokenA()));
+    console.log(ethers.utils.formatEther(await PoolContract.reservesTokenB()));
   });
 });

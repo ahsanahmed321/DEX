@@ -53,12 +53,22 @@ contract Pool {
         return amountOut;
     }
 
+    function getRatio() public view returns (uint256) {
+        uint256 ratio = reservesTokenA / reservesTokenB;
+        return ratio;
+    }
+
     function addLiquidity(
         address tokenAL,
         address tokenBL,
-        uint256 amountTokenA,
-        uint256 amountTokenB
+        uint256 amountTokenA
     ) public payable {
+        uint256 ratio = 1000000000000000000;
+        if (reservesTokenA > 0 && reservesTokenB > 0) {
+            ratio = reservesTokenA.div(reservesTokenB);
+        }
+        uint256 amountTokenB = amountTokenA.div(ratio);
+
         IERC20(tokenAL).transferFrom(msg.sender, address(this), amountTokenA);
         reservesTokenA = reservesTokenA.add(amountTokenA);
 

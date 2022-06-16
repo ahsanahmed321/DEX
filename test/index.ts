@@ -72,8 +72,7 @@ describe("DEX", function () {
     await PoolContract.addLiquidity(
       TokenA.address,
       TokenB.address,
-      ethers.utils.parseEther("50"),
-      ethers.utils.parseEther("50")
+      ethers.utils.parseEther("100")
     );
 
     const LPTokenContract = new ethers.Contract(

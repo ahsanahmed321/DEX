@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./LPToken.sol";
+import "hardhat/console.sol";
 
 contract Pool {
     using SafeMath for uint256;
@@ -16,6 +17,7 @@ contract Pool {
     uint256 public reservesTokenA;
     uint256 public reservesTokenB;
     uint256 public k;
+    uint256 public totalSupplyOfLP;
 
     constructor(
         address tokenAC,
@@ -55,7 +57,33 @@ contract Pool {
 
     function getRatio() public view returns (uint256) {
         uint256 ratio = reservesTokenA / reservesTokenB;
+        console.log(ratio, "yeh dekho ratio");
         return ratio;
+    }
+
+    function updateReserve(uint256 newReservesTokenA, uint256 newReservesTokenB) internal {
+        reservesTokenA = newReservesTokenA;
+        reservesTokenB = newReservesTokenB;
+    }
+
+    function removeLiquidity(uint256 LPTokenAmount) public {
+        console.log("LPTokenAmount : %s", LPTokenAmount);
+        console.log("totalSupplyOfLP : %s", totalSupplyOfLP);
+        uint256 share = LPTokenAmount.mul(100).div(totalSupplyOfLP);
+        console.log("share %s :", share);
+        uint256 sharesInReserveA = share.mul(reservesTokenA).div(100);
+        console.log("sharesInReserveA %s :", sharesInReserveA);
+        uint256 sharesInReserveB = share.mul(reservesTokenB).div(100);
+        console.log("sharesInReserveB %s :", sharesInReserveB);
+
+        // updateReserve(reservesTokenA.sub(sharesInReserveA), reservesTokenB.sub(sharesInReserveB));
+
+        uint256 bal = ILPToken(LPTokenAddress).balanceOf(msg.sender);
+        console.log("bal is %s:", bal);
+        ILPToken(LPTokenAddress).burnFrom(msg.sender, LPTokenAmount);
+        IERC20(tokenA).transfer(msg.sender, sharesInReserveA);
+        IERC20(tokenB).transfer(msg.sender, sharesInReserveB);
+
     }
 
     function addLiquidity(
@@ -63,11 +91,14 @@ contract Pool {
         address tokenBL,
         uint256 amountTokenA
     ) public payable {
-        uint256 ratio = 1000000000000000000;
+
+        uint256 ratio = 1;
         if (reservesTokenA > 0 && reservesTokenB > 0) {
             ratio = reservesTokenA.div(reservesTokenB);
         }
+        
         uint256 amountTokenB = amountTokenA.div(ratio);
+        console.log("kumail", amountTokenB);
 
         IERC20(tokenAL).transferFrom(msg.sender, address(this), amountTokenA);
         reservesTokenA = reservesTokenA.add(amountTokenA);
@@ -76,8 +107,42 @@ contract Pool {
         reservesTokenB = reservesTokenB.add(amountTokenB);
 
         k = amountTokenA.mul(amountTokenB);
+        console.log("LPTokensToMint at start is %s tokens", totalSupplyOfLP);
+        if(totalSupplyOfLP == 0){
+            ILPToken(LPTokenAddress).mint(msg.sender, 100 ether);
+            totalSupplyOfLP += 100 * 10**18;
+            console.log("LPTokensToMint when ts = 0 %s tokens", totalSupplyOfLP);
 
-        ILPToken(LPTokenAddress).mint(msg.sender, amountTokenA);
+        }   
+        else{
+            uint256 LPTokensToMint = calculateLPToken(amountTokenA, amountTokenB);
+            console.log("LPTokensToMint after calculation is", LPTokensToMint);
+            totalSupplyOfLP = totalSupplyOfLP + LPTokensToMint.mul(10**18);
+            ILPToken(LPTokenAddress).mint(msg.sender, LPTokensToMint.mul(10**18));
+        }
+
+        //ILPToken(LPTokenAddress).mint(msg.sender, amountTokenA);
+    }
+
+    function calculateLPToken(uint256 amountTokenA, uint256 amountTokenB) internal view returns(uint256 LPTokensToMint) {
+        //uint256 ratio = ti();
+        uint256 total = amountTokenA.add(amountTokenB);
+        console.log("total %s",total);
+
+        uint256 totalReserve = reservesTokenA.add(reservesTokenB);
+        console.log("totalReserve %s",totalReserve);
+        
+        uint256 shareOfLP = total.mul(100).div(totalReserve);
+        console.log("shareOfLP %s",shareOfLP);
+        
+        uint256 shareOfPreviousLPs = 100 - shareOfLP;
+        console.log("shareOfPreviousLPs %s",shareOfPreviousLPs);
+        
+        LPTokensToMint = 100 * shareOfLP / shareOfPreviousLPs; 
+        console.log("LPTokensToMint is %s tokens",LPTokensToMint);
+
+        // uint256 shareOfLPs = (reservesTokenA + reservesTokenB / totalReserve) * 100;
+
     }
 
     function swap(address tokenFrom, uint256 amountFrom) public payable {

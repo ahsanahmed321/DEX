@@ -69,6 +69,8 @@ describe("DEX", function () {
       accounts[0]
     ) as Pool;
 
+    console.log("first liquid");
+
     await PoolContract.addLiquidity(
       TokenA.address,
       TokenB.address,
@@ -86,7 +88,7 @@ describe("DEX", function () {
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenA()));
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenB()));
 
-    await PoolContract.swap(TokenA.address, ethers.utils.parseEther("10"));
+    // await PoolContract.swap(TokenA.address, ethers.utils.parseEther("10"));
 
     const TokenAInstance = new ethers.Contract(
       TokenA.address,
@@ -107,5 +109,31 @@ describe("DEX", function () {
 
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenA()));
     console.log(ethers.utils.formatEther(await PoolContract.reservesTokenB()));
+
+    console.log("second liquid");
+    await PoolContract.addLiquidity(
+      TokenA.address,
+      TokenB.address,
+      ethers.utils.parseEther("100")
+    );
+    console.log("third liquid");
+    await PoolContract.addLiquidity(
+      TokenA.address,
+      TokenB.address,
+      ethers.utils.parseEther("100")
+    );
+
+    const LPTokenInstance = new ethers.Contract(
+      LPTokenAddress,
+      ERC20TokenABI.abi,
+      accounts[0]
+    );
+
+    await LPTokenInstance.increaseAllowance(
+      PoolAddress,
+      ethers.utils.parseEther("1000")
+    );
+
+    await PoolContract.removeLiquidity(ethers.utils.parseEther("100"));
   });
 });
